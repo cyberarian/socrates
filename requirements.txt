@@ -1,5 +1,5 @@
 streamlit
-azure-ai-inference
+groq
 python-dotenv
 pillow
 requests
