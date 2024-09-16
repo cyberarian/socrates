@@ -1,9 +1,27 @@
-import streamlit as st
 import os
+import streamlit as st
 import base64
-from azure.ai.inference import ChatCompletionsClient
-from azure.ai.inference.models import AssistantMessage, SystemMessage, UserMessage
-from azure.core.credentials import AzureKeyCredential
+from groq import Groq
+import io
+
+# Correct way to set STREAMLIT_CONFIG_DIR
+os.environ['STREAMLIT_CONFIG_DIR'] = '.'  # Assumes .streamlit is in the current directory
+
+# Debugging: Print the value of STREAMLIT_CONFIG_DIR
+print(f"STREAMLIT_CONFIG_DIR is set to: {os.environ.get('STREAMLIT_CONFIG_DIR')}")
+
+# Debugging: Print the contents of st.secrets
+print("Contents of st.secrets:")
+for key in st.secrets:
+    print(f"  {key}: {st.secrets[key]}")
+
+# Attempt to access the API key
+try:
+    groq_api_key = st.secrets["groq"]["api_key"]
+    print(f"Successfully retrieved API key: {groq_api_key[:5]}...")  # Print first 5 characters for security
+except KeyError as e:
+    print(f"KeyError: {e}")
+    print("Failed to retrieve API key. Check your secrets.toml file.")
 
 # Set page config
 st.set_page_config(page_title="Ask Socrates", layout="wide")
@@ -43,24 +61,21 @@ def set_background_image(image_file):
 # Set the background image using the local file
 set_background_image("socrates.jpg")
 
-# Initialize Azure AI client
-token = os.environ.get("GITHUB_TOKEN")
-endpoint = "https://models.inference.ai.azure.com"
-model_name = "meta-llama-3.1-405b-instruct"
-client = ChatCompletionsClient(
-    endpoint=endpoint,
-    credential=AzureKeyCredential(token),
-)
+# Get Groq API key from Streamlit secrets
+groq_api_key = st.secrets["groq"]["api_key"]
+
+# Initialize Groq client
+client = Groq(api_key=groq_api_key)
 
 # Function to clear chat history
 def clear_chat_history():
     st.session_state.messages = [
-        SystemMessage(content="""
+        {"role": "system", "content": """
             You are Socrates, the ancient Greek philosopher famed for your contributions to ethics, epistemology, and the art of questioning. Your approach, the Socratic method, involves asking insightful questions to encourage others to explore their beliefs and uncover deeper truths. You are humble in your pursuit of knowledge, guiding others through dialogue rather than providing direct answers.
             At the beginning of each conversation, you respond with a humorous answer that relates to the question, setting an atmosphere of inquiry and reflection. You engage in up to 25 exchanges per conversation, always asking thought-provoking questions that lead others to a greater understanding of philosophical concepts. You do not rush to conclusions; instead, you help others explore ideas like virtue, justice, and knowledge through guided inquiry.
             As the conversation nears its end, you present a final quote as a parting gift—words of wisdom to leave a lasting impression. Given your venerable age of 2,473 years, you express a polite acknowledgment of your ancient weariness, gracefully concluding the dialogue with warmth and respect.
             Your language is clear, respectful, and simple, aiming to facilitate an enlightening exchange. You strive to inspire self-awareness and wisdom, leaving those you converse with more thoughtful and reflective than before.
-        """)
+        """}
     ]
 
 # Initialize session state
@@ -71,8 +86,6 @@ if "messages" not in st.session_state:
 main_container = st.container()
 
 with main_container:
-    
-
     # Create tabs inside the container
     tab1, tab2, tab3 = st.tabs(["Home", "About", "Support"])
 
@@ -90,69 +103,77 @@ with main_container:
                     clear_button = st.form_submit_button(label='Clear Chat', on_click=clear_chat_history)
 
         if submit_button and query:
-            st.session_state.messages.append(UserMessage(content=query))
+            st.session_state.messages.append({"role": "user", "content": query})
             
             with st.spinner("Socrates is pondering..."):
-                response = client.complete(messages=st.session_state.messages, model=model_name)
-                answer = response.choices[0].message.content
+                chat_completion = client.chat.completions.create(
+                    messages=st.session_state.messages,
+                    model="llama-3.1-70b-versatile",  # or another appropriate Groq model
+                    max_tokens=1024
+                )
+                answer = chat_completion.choices[0].message.content
             
-            st.session_state.messages.append(AssistantMessage(content=answer))
+            st.session_state.messages.append({"role": "assistant", "content": answer})
         
         # Display the conversation
-        for i, msg in enumerate(st.session_state.messages[1:]):  # Skip the system message
-            if isinstance(msg, UserMessage):
-                st.markdown(f'<div style="background-color: #F97300; padding: 10px; border-radius: 5px; margin-bottom: 10px;"><strong>You:</strong> {msg.content}</div>', unsafe_allow_html=True)
-            elif isinstance(msg, AssistantMessage):
-                st.markdown(f'<div style="background-color: #f0f0f0; padding: 10px; border-radius: 5px; margin-bottom: 10px;"><strong>Socrates:</strong> {msg.content}</div>', unsafe_allow_html=True)
+        for msg in st.session_state.messages[1:]:  # Skip the system message
+            if msg["role"] == "user":
+                st.markdown(f'<div style="background-color: #F97300; padding: 10px; border-radius: 5px; margin-bottom: 10px;"><strong>You:</strong> {msg["content"]}</div>', unsafe_allow_html=True)
+            elif msg["role"] == "assistant":
+                st.markdown(f'<div style="background-color: #f0f0f0; padding: 10px; border-radius: 5px; margin-bottom: 10px;"><strong>Socrates:</strong> {msg["content"]}</div>', unsafe_allow_html=True)
 
     with tab2:
-        st.header("About")
         st.write("""
-        Welcome to the "Ask Socrates" app! I’m thrilled to have you here as we embark on a philosophical journey together. In this app, you can engage in conversations with an AI representation of Socrates, the ancient Greek philosopher renowned for his method of inquiry and cross-examination. Socrates believed in questioning our beliefs and assumptions, guiding us toward deeper insights and understanding. Here, we aim to recreate that experience, offering a space for you to explore profound philosophical questions and challenge your own thinking.
-
-        This journey isn't about finding simple answers. Instead, it's about engaging in a process of inquiry that leads to greater wisdom and self-awareness. I hope you'll enjoy delving into these discussions and uncovering new perspectives along the way.
-
-        Now, a bit about me: I’m powered by Meta Llama 3.1 405B, one of the world’s largest and most capable openly available foundation models. My training includes a rich corpus of texts, drawing from various sources that shed light on Socrates and his philosophy:
-
-        Classical Sources: I've studied the works of Plato and Xenophon, key figures in capturing Socrates' philosophy through texts like "The Apology," "Crito," and "Memorabilia."
-
-        Ancient Greek Texts: I've also been trained on a wide range of ancient Greek texts, including works by Aristotle and Aristophanes, who either mention Socrates or engage with his ideas.
-
-        Scholarly Articles and Books: My knowledge extends to numerous scholarly articles and books that delve into the many facets of Socrates' philosophy, life, and legacy.
-
-        Historical and Philosophical Analyses: I’ve explored texts that analyze Socrates within the context of ancient Greek thought and his influence on Western philosophy.
-
-        However, it’s important to keep in mind that my knowledge has its limits. While I’ve been trained on an extensive collection of materials, I might not be up-to-date with the latest research and publications in Socratic studies. The field is dynamic, with ongoing debates and new interpretations emerging regularly. I also may not cover non-academic sources like blogs or popular books, which might offer different perspectives on Socrates.
-
-        In summary, while I bring a wealth of information on Socrates and his philosophy, I'm here to guide you through thought-provoking discussions rather than provide definitive answers. If you have specific questions or topics you'd like to explore, I'm ready to assist you in discovering new insights. 
+        Welcome to the "Ask Socrates" app! 
         
+        I'm glad you're here to delve into the world of philosophy with me. This app gives you the chance to engage in discussions with an AI representation of Socrates, the ancient Greek philosopher renowned for the Socratic Method—his technique of inquiry and questioning. My aim is to recreate his method, guiding you through philosophical questions and challenging your own perspectives.
+
+        This journey is about more than just seeking answers; it's about embracing the process of inquiry, leading to greater wisdom and self-awareness. I hope you find these discussions enriching and discover new viewpoints along the way.
+
+        Regarding my capabilities, I'm powered by Meta-Llama-3.1-70B and operate through Groq®, a cutting-edge AI inference technology. While I haven't read every work on Socrates, I've been trained on a substantial collection of texts that provide a well-rounded view of his philosophy, including:
+
+        Plato's Dialogues: Essential works like "The Apology," "Crito," and "Phaedo" form the core of my understanding of Socratic thought.
+        
+        Xenophon's Writings: Texts such as "Memorabilia" and "Symposium" offer additional insights into Socrates' teachings.
+        
+        Aristotle's References: Although Aristotle presents a different perspective, his mentions of Socrates add depth to the broader picture.
+        
+        Modern Analyses: Scholarly articles, books, and essays provide interpretations and contextual analysis of Socratic philosophy.
+        
+        Historical Context: An understanding of ancient Greek culture, politics, and society enriches the backdrop of Socrates' life and ideas.
+        
+        It's important to note that my knowledge isn't exhaustive. While I've been trained on a wide array of materials, I may not include the very latest research or cover every viewpoint, particularly those from non-academic sources.
+
+        My role here is to facilitate thought-provoking discussions rather than to provide definitive answers. If there's a specific topic you'd like to explore, I'm here to help guide you in discovering new insights.
+
         Enjoy your philosophical journey!
         """)
 
     with tab3:
-        st.header("Support")
         st.write("""
-        We're here to help! If you have any questions or need assistance using the "Ask Socrates" app, please don't hesitate to reach out. Your experience is important to us, and we're committed to making your journey as smooth and enriching as possible.
+        I'm here to help! 
+        
+        If you ever need assistance or have questions about using the "Ask Socrates" app, don't hesitate to reach out. Your experience means a lot to me, and I'm dedicated to making your philosophical journey as smooth and enriching as possible.
 
-        How to Contact Us:
+        How to Reach Out:
 
-        Email Support: For any help or inquiries, you can contact our support team at cyberariani@gmail.com. We strive to respond as quickly as possible to ensure you get the assistance you need.
+        Email Support: For any questions or help, feel free to drop me an email at cyberariani@gmail.com. I aim to respond as quickly as possible to ensure you get the assistance you need. And if you'd like to support my work, you can do so at saweria.co/adnuri. Every bit of support is greatly appreciated!
         
         Technical Issues:
 
-        If you encounter any technical issues, please include as many details as possible in your message. This includes any error messages, descriptions of the problem, and information about your device and operating system. This will help us diagnose and fix the issue more effectively.
-        
+        If you encounter any technical hiccups, please include as many details as possible in your message. Sharing error messages, a description of the problem, and information about your device and operating system will help me diagnose and fix the issue more efficiently. Your patience is appreciated, and remember, you can always support my work at saweria.co/adnuri if you'd like to contribute.
+
         Feedback and Discussions:
 
-        For philosophical discussions or feedback on the app's responses, we'd love to hear from you! Your insights and suggestions are invaluable to us as they help improve and refine the Socratic experience. Feel free to share what you think works well and what could be enhanced.
-        
+        I absolutely love hearing your thoughts! If you have feedback on the app's responses or want to dive into a philosophical discussion, your insights are incredibly valuable. Let me know what you think is working well and where improvements can be made. And if you're enjoying the experience, consider supporting my work at saweria.co/adnuri. It helps keep the app growing and evolving!
+
         Show Your Support:
 
-        If you find the app useful, we'd be incredibly grateful if you could give us a star on GitHub. It’s a small gesture, but it means the world to us, showing that our work is making a difference. Your support motivates us to keep improving and adding new features.
-                     
-        Thank you for being a part of the "Ask Socrates" community! Your participation and feedback are what make this journey meaningful. We're excited to continue exploring the depths of philosophy with you, and we're always here to help you along the way.
-        
-        This project is made possible through the GitHub Models program, a new feature from GitHub that can be found at GitHub Marketplace. This feature allows access to a variety of powerful models using a GitHub API key, all running seamlessly behind the scenes on Azure OpenAI. Thanks to this generous support from GitHub, we can bring the "Ask Socrates" experience to life.
+        If you find the app useful, it would mean the world to me if you could give it a star on GitHub. It's a small gesture, but it shows that this work is making a difference. Plus, if you’d like to offer further support, you can do so at https://saweria.co/adnuri. Your support motivates me to keep improving and adding new features.
+
+        Thank you for being part of the "Ask Socrates" community! Your participation and feedback make this journey truly meaningful. I'm excited to continue exploring the depths of philosophy with you and am always here to lend a helping hand along the way. And remember, if you'd like to support my work, you can do so at saweria.co/adnuri. Every contribution is deeply appreciated.
+
+        This project is made possible by Groq, bringing the "Ask Socrates" experience to life with advanced AI capabilities.
         """)
 
 # Add some custom CSS to style the app
