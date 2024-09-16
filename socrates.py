@@ -161,11 +161,11 @@ with main_container:
         
         Technical Issues:
 
-        If you encounter any technical hiccups, please include as many details as possible in your message. Sharing error messages, a description of the problem, and information about your device and operating system will help me diagnose and fix the issue more efficiently. Your patience is appreciated, and remember, you can always support my work at saweria.co/adnuri if you'd like to contribute.
+        If you encounter any technical hiccups, please include as many details as possible in your message. Sharing error messages, a description of the problem, and information about your device and operating system will help me diagnose and fix the issue more efficiently. Your patience is appreciated.
 
         Feedback and Discussions:
 
-        I absolutely love hearing your thoughts! If you have feedback on the app's responses or want to dive into a philosophical discussion, your insights are incredibly valuable. Let me know what you think is working well and where improvements can be made. And if you're enjoying the experience, consider supporting my work at saweria.co/adnuri. It helps keep the app growing and evolving!
+        I absolutely love hearing your thoughts! If you have feedback on the app's responses or want to dive into a philosophical discussion, your insights are incredibly valuable. Let me know what you think is working well and where improvements can be made.
 
         Show Your Support:
 
