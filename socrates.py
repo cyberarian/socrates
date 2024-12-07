@@ -108,7 +108,7 @@ with main_container:
             with st.spinner("Socrates is pondering..."):
                 chat_completion = client.chat.completions.create(
                     messages=st.session_state.messages,
-                    model="llama-3.1-70b-versatile",  # or another appropriate Groq model
+                    model="llama-3.3-70b-versatile",  # or another appropriate Groq model
                     max_tokens=1024
                 )
                 answer = chat_completion.choices[0].message.content
