@@ -130,7 +130,7 @@ with main_container:
 
         This journey is about more than just seeking answers; it's about embracing the process of inquiry, leading to greater wisdom and self-awareness. I hope you find these discussions enriching and discover new viewpoints along the way.
 
-        Regarding my capabilities, I'm powered by Meta-Llama-3.1-70B and operate through Groq®, a cutting-edge AI inference technology. While I haven't read every work on Socrates, I've been trained on a substantial collection of texts that provide a well-rounded view of his philosophy, including:
+        Regarding my capabilities, I'm powered by Meta-Llama-3.3-70b-versatile and operate through Groq®, a cutting-edge AI inference technology. While I haven't read every work on Socrates, I've been trained on a substantial collection of texts that provide a well-rounded view of his philosophy, including:
 
         Plato's Dialogues: Essential works like "The Apology," "Crito," and "Phaedo" form the core of my understanding of Socratic thought.
         
