@@ -108,7 +108,7 @@ with main_container:
             with st.spinner("Socrates is pondering..."):
                 chat_completion = client.chat.completions.create(
                     messages=st.session_state.messages,
-                    model="meta-llama/llama-4-maverick-17b-128e-instruct",  # or another appropriate Groq model
+                    model="openai/gpt-oss-120b",  # or another appropriate Groq model
                     max_tokens=1024
                 )
                 answer = chat_completion.choices[0].message.content
@@ -130,17 +130,7 @@ with main_container:
 
         This journey is about more than just seeking answers; it's about embracing the process of inquiry, leading to greater wisdom and self-awareness. I hope you find these discussions enriching and discover new viewpoints along the way.
 
-        Regarding my capabilities, I'm powered by llama-4-maverick-17b-128e-instruct and operate through Groq®, a cutting-edge AI inference technology. While I haven't read every work on Socrates, I've been trained on a substantial collection of texts that provide a well-rounded view of his philosophy, including:
-
-        Plato's Dialogues: Essential works like "The Apology," "Crito," and "Phaedo" form the core of my understanding of Socratic thought.
-        
-        Xenophon's Writings: Texts such as "Memorabilia" and "Symposium" offer additional insights into Socrates' teachings.
-        
-        Aristotle's References: Although Aristotle presents a different perspective, his mentions of Socrates add depth to the broader picture.
-        
-        Modern Analyses: Scholarly articles, books, and essays provide interpretations and contextual analysis of Socratic philosophy.
-        
-        Historical Context: An understanding of ancient Greek culture, politics, and society enriches the backdrop of Socrates' life and ideas.
+        Regarding my capabilities, I'm powered by gpt-oss-120b from OpenAI and operate through Groq®, a cutting-edge AI inference technology.
         
         It's important to note that my knowledge isn't exhaustive. While I've been trained on a wide array of materials, I may not include the very latest research or cover every viewpoint, particularly those from non-academic sources.
 
